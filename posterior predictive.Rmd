@@ -1,0 +1,90 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+
+mean(sim_BHinvg$theta[,1] > sim_BHinvg$theta[,3])
+
+# Simulate posterior predictive replicated data for the existing countries (original model)
+
+n_sims <- length(sim_BHinvg$lp__)
+m_rep <- array(NA, c(n_sims, 11)) # create an array that is 11-by-number of simulations
+for (s in 1:n_sims){
+  m_rep[s,] <- rnorm(11, sim_BHinvg$theta[s,], countries$sigma) # for each simulation, randomly sample from normal distribution with different thetas
+}
+
+# Carry out a graphical posterior predictive check as suggested by creating an array of histograms similar to Fig. 6.2 pg.144
+# 20 replicated data in the original 11 countries
+
+par(mfrow=c(5,4), mar=c(4,4,2,2))
+hist(countries$m, xlab="", main="m")
+for (s in 1:19){
+  hist(m_rep[s,], xlab="", main=paste("m_rep",s))
+}
+
+# Determine the minima and the maxima for each of the simulations and compare with the minimum and the maximum from the original distribution
+mins <- c()
+maxs <- c()
+for (s in 1:19){
+  mins <- append(mins, min(m_rep[s,]))
+  maxs <- append(maxs, max(m_rep[s,]))
+}
+
+# Plot the histogram for both minima and maxima
+hist(mins)
+abline(v = min(countries$m), lty = "dashed", col = "red", lwd = 2)
+hist(maxs)
+abline(v = max(countries$m), lty = "dashed", col = "red", lwd = 2)
+
+# Computing the difference between the best and the second best of the 11 countries
+difftest <- function(y){
+  m_sort <- rev(sort(y))
+  return (m_sort[1] - m_sort[2]) # difference between the sorted first and the sorted second
+}
+ranktest <- function(y){
+  m_sort <- rev(sort(y))
+  return (which(m_sort == y[11])) # rank of S&P_500
+}
+
+t_m <- difftest(countries$m) # difference between BS and SSEC
+t_m2 <- ranktest(countries$m) # rank of S&P_500
+t_rep <- rep (NA, n_sims) # number of replication
+t_rep2 <- rep (NA, n_sims) # number of replication
+for (s in 1:n_sims){
+  t_rep[s] <- difftest(m_rep[s,])
+}
+
+for (s in 1:n_sims){
+  t_rep2[s] <- ranktest(m_rep[s,])
+}
+
+# Summarize the posterior predictive check by giving a numerical comparison of the test statistic to its replication distribution, a p-value, and a graph like in pg.144+148
+# T(m) = 10  and T(m_rep) has mean 9.2 and sd 8.4 
+# Pr (T(m_rep) > T(m)) = 0.36
+# T(y) = 0  and T(m_rep) has mean 0 and sd 0 
+# Pr (T(m_rep) > T(y)) = 0.84
+
+par(mfrow=c(1,1))
+cat("T(y) =", round(t_m,3), " and T(m_rep) has mean",
+     round(mean(t_rep),3), "and sd", round(sd(t_rep),3),
+     "\nPr (T(m_rep) > T(y)) =", round(mean(t_rep>t_m),3), "\n")
+hist0 <- hist(t_rep, xlim=range(t_m,t_rep), xlab="T(m_rep)")
+lines(rep(t_m,2), c(0,1e6), lty = "dashed", col = "red", lwd = 2)
+text(t_m, .95*max(hist0$count), "T(m)", adj=-0.1)
+
+cat("T(y) =", round(t_m2,3), " and T(m_rep) has mean",
+     round(mean(t_rep2),3), "and sd", round(sd(t_rep2),3),
+     "\nPr (T(m_rep) > T(y)) =", round(mean(t_rep2>t_m2),3), "\n")
+hist1 <- hist(t_rep2, xlab="T(m_rep)") #xlim=range(0,t_rep2),
+lines(rep(t_m2,2), c(0,1e6), lty = "dashed", col = "red", lwd = 2)
+text(t_m2, .95*max(hist1$count), "T(m)", adj=-0.1)
+
+```
+
+
+
+
+
