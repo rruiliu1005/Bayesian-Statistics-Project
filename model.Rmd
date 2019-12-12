@@ -1,0 +1,211 @@
+---
+title: "models"
+author: "Rui Liu"
+date: "12/6/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+
+```{r read in data}
+BSM <- read.csv("/Users/ruiliu/Desktop/Bayesian Statistics/cleaned model data/Bombay Stock Market Index.csv")
+BSM <- BSM$daily_change
+BSM <- BSM[!is.na(BSM)]
+
+BS <- read.csv("/Users/ruiliu/Desktop/Bayesian Statistics/cleaned model data/Bovespa Stock Index.csv")
+BS <- BS$daily_change
+BS <- BS[!is.na(BS)]
+
+CAC <- read.csv("/Users/ruiliu/Desktop/Bayesian Statistics/cleaned model data/CAC 40 Index.csv")
+CAC <- CAC$daily_change
+CAC <- CAC[!is.na(CAC)]
+
+DAX <- read.csv("/Users/ruiliu/Desktop/Bayesian Statistics/cleaned model data/DAX 30 Index.csv")
+DAX <- DAX$daily_change
+DAX <- DAX[!is.na(DAX)]
+
+FTSE_100 <- read.csv("/Users/ruiliu/Desktop/Bayesian Statistics/cleaned model data/FTSE 100 Index.csv")
+FTSE_100 <- FTSE_100$daily_change
+FTSE_100<- FTSE_100[!is.na(FTSE_100)]
+
+FTSE_MIB <- read.csv("/Users/ruiliu/Desktop/Bayesian Statistics/cleaned model data/FTSE MIB Index.csv")
+FTSE_MIB <- FTSE_MIB$daily_change
+FTSE_MIB <- FTSE_MIB[!is.na(FTSE_MIB)]
+
+KOSPI <- read.csv("/Users/ruiliu/Desktop/Bayesian Statistics/cleaned model data/KOSPI Index.csv")
+KOSPI <- KOSPI$daily_change
+KOSPI <- KOSPI[!is.na(KOSPI)]
+
+Nikkei <- read.csv("/Users/ruiliu/Desktop/Bayesian Statistics/cleaned model data/Nikkei 225 Index.csv")
+Nikkei <- Nikkei$daily_change
+Nikkei <- Nikkei[!is.na(Nikkei)]
+
+SP_TSX <- read.csv("/Users/ruiliu/Desktop/Bayesian Statistics/cleaned model data/S&P_TSX 60 Index.csv")
+SP_TSX <- SP_TSX$daily_change
+SP_TSX <- SP_TSX[!is.na(SP_TSX)]
+
+SSEC <- read.csv("/Users/ruiliu/Desktop/Bayesian Statistics/cleaned model data/SSEC Index.csv")
+SSEC <- SSEC$daily_change
+SSEC <- SSEC[!is.na(SSEC)]
+
+
+SP_500 <- read.csv("/Users/ruiliu/Desktop/Bayesian Statistics/cleaned model data/S&P 500 Index.csv")
+SP_500 <- SP_500$daily_change
+SP_500 <- SP_500[!is.na(SP_500)]
+
+DC <- list(BSM = BSM, BS = BS, CAC = CAC, DAX = DAX, FTSE_100 = FTSE_100, FTSE_MIB = FTSE_MIB, KOSPI = KOSPI, Nikkei = Nikkei, SP_TSX = SP_TSX, SSEC = SSEC, SP_500 = SP_500)
+```
+
+
+```{r}
+country_mean <- lapply(DC, mean)
+country_mean <- unlist(country_mean)
+country_sd <- lapply(DC, sd)
+country_sd <- unlist(country_sd)
+nj <- lapply(DC, length)
+nj <- unlist(nj)
+country_sd <- country_sd/sqrt(nj)
+country_sd
+countries <- list(C = 11, m = country_mean, sigma = country_sd)
+```
+
+
+
+```{r, fig.height=7, fig.width=12}
+plot(1:11, countries$m, lwd = 3, ylim = c(-.2, .2), xaxt = "n", frame = FALSE, pch = 20, col = "red")
+axis(1, 1:11, names(DC))
+arrows(1:11, countries$m - countries$sigma, 1:11, countries$m+countries$sigma, length = 0.05, angle = 90, code = 3, lwd = 2)
+abline(h = 0, lty = 2)
+```
+# No- pooling Model #
+
+```{r}
+# assume data follows normal N(theta j, sigma2 j)
+set.seed(0)
+n <- 10000
+theta <- matrix(nrow = n, ncol = 11)
+for (j in 1:11){
+  theta[,j] <- rnorm(n, countries$m[j], countries$sigma[j])
+}
+```
+
+```{r, fig.height=7, fig.width=13}
+boxplot(theta, main = "No Pooling Model", xaxt = "n", frame = FALSE, pch = 20)
+axis(1, 1:11, names(DC))
+abline(h = 0, lty = 2)
+points(countries$m, col = "red", lwd = 2, pch = 19)
+```
+
+# Complete Pooling Model # 
+
+```{r}
+pooled_variance <- 1/sum(1/countries$sigma^2)
+pooled_mean <- sum(countries$m/countries$sigma^2)*pooled_variance
+
+theta_pooled <- matrix(rnorm(n*11, pooled_mean, sqrt(pooled_variance)), ncol = 11)
+```
+
+```{r, fig.height=7, fig.width=13}
+boxplot(theta_pooled, main = "Complete Pooling Model", xaxt = "n", frame = FALSE, pch = 20, ylim = c(-0.15, 0.15))
+axis(1, 1:11, names(DC))
+abline(h = 0, lty = 2)
+points(countries$m, col = "red", lwd = 2, pch = 19)
+```
+
+
+# Bayesian Hierarchical Model # 
+
+```{r warnings = FALSE}
+library("rstan")
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
+
+set.seed(0)
+BH_Model <- stan("/Users/ruiliu/Desktop/Bayesian Statistics/countries.stan", data = countries, iter = 10000, chains = 4)
+BH_Model
+```
+
+```{r, fig.height=7, fig.width=13}
+sim_BH <- extract(BH_Model)
+boxplot(sim_BH$theta, main = "Hierarchical Model", xaxt = "n", frame = FALSE, pch = 20, ylim = c(-0.15, 0.15))
+axis(1, 1:11, names(DC))
+abline(h=0, lty = 2)
+points(countries$m, col = "red", lwd = 2, pch = 19)
+```
+
+```{r, fig.height=16, fig.width=12}
+par(mfrow = c(6,2))
+for (i in 1:11){
+  hist(sim_BH$theta[,i], col = "grey", main = names(DC)[i], breaks = 30, probability = TRUE, xlab = bquote(theta[.(i)]))
+  abline(v = countries$m[i], lty = 2, lwd=2, col = "red")
+}
+```
+
+
+## Marginal Posteriors of the parameters of the population distribution ## 
+```{r}
+par(mfrow = c(1,2))
+hist(sim_BH$mu, col = "pink", breaks = 30, probability = TRUE, main = "Mean", xlab = expression(mu))
+abline(v = 0, lty = 2, lwd = 2, col = "green")
+hist(sim_BH$tau, col = "light blue", breaks = 30, probability = TRUE, main = "Standard Deviation", xlab = expression(tau))
+```
+
+# Hierarchical Model with half - Cauchy prior # 
+
+```{r}
+combined_data <- unlist(DC)
+sd(combined_data)
+
+x <- seq(0,11, by = 0.01)
+plot(x, dcauchy(x,0,2), type = "l", col = "red", lwd = 2, xlab = expression(tau), ylab = "Density")
+```
+
+```{r, fig.height=7, fig.width=13}
+sim_BHC <- readRDS("countries.rds")
+
+BHC <- stan("countrieshc.stan", data = countries, iter = 10000, control = list(adapt_delta = 0.95))
+sim_BHC <- extract(BHC)
+```
+
+
+```{r, fig.height=7, fig.width=13}
+boxplot(sim_BHC$theta, main = "Hierachical Model with Half Cauchy(2) Prior", xaxt = "n", frame = FALSE, pch = 20, ylim = c(-0.15, 0.15))
+axis(1, 1:11, names(DC))
+abline(h=0, lty = 2)
+points(countries$m, col = "red", lwd = 2, pch = 19)
+```
+
+```{r}
+par(mfrow = c(1,2))
+hist(sim_BH$tau, col = "pink", breaks = 30, probability = TRUE, main = "Posterior with uniform prior",xlim = c(0,0.3), xlab = expression(mu))
+hist(sim_BHC$tau, col = "light blue", breaks = 30, probability = TRUE, main = "Posteror with Cauchy(0,2)",xlim = c(0,0.3), xlab = expression(tau))
+```
+
+# Hierarchical model with inverse gamma prior # 
+
+```{r, warning=FALSE}
+BHinvg <- stan("countrieshivg.stan", data = countries, iter = 10000, control = list(adapt_delta = .95))
+sim_BHinvg <- extract(BHinvg)
+```
+
+```{r, fig.height=7, fig.width=13}
+boxplot(sim_BHinvg$theta, main = "Hierachical Model with Inverse Gamma(5,0.1) Prior", xaxt = "n", frame = FALSE, pch = 20, ylim = c(-0.3, 0.4))
+axis(1, 1:11, names(DC))
+points(countries$m, col = "red", lwd = 2, pch = 19)
+
+```
+```{r}
+par(mfrow = c(1,2))
+hist(sim_BH$tau,col = "pink", breaks = 50, probability = TRUE, main = "Improper Prior",xlim = c(0,0.3), xlab = expression(tau))
+hist(sim_BHinvg$tau,col = "light blue", breaks = 50, probability = TRUE, main = "Prior Inv-Gamma(5,0.1)",xlim = c(0,0.3), xlab = expression(tau))
+```
