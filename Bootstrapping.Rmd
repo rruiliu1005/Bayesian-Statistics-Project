@@ -1,0 +1,235 @@
+---
+title: "Bootstrapping"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## China
+```{r, out.width="75%"}
+# China 
+library(boot)
+China <- read.csv("SSEC Index.csv", header = TRUE)
+DC_china <- China$daily_change
+
+# Function for bootstrapping sample mean
+mean_boot <- function(x, idx){
+  ans <- mean(x[idx])
+  ans
+}
+
+# Function for bootstrapping sample variance 
+var_boot <- function(x, idx){
+  anx <- var(x[idx])
+  anx
+}
+
+# Construct
+DC_china_mean_boot <- boot(DC_china, statistic = mean_boot, R = 999)
+DC_china_var_boot <- boot(DC_china, statistic = var_boot, R = 999)
+
+# Print
+DC_china_mean_boot
+DC_china_var_boot
+
+# Plot bootstrap distribution and qq-plot against normal
+plot(DC_china_mean_boot)
+plot(DC_china_var_boot)
+```
+
+
+## South Korea
+```{r, out.width="75%"}
+# South Korea
+South_Korea <- read.csv("KOSPI Index.csv", header = TRUE)
+DC_sk <- South_Korea$daily_change
+
+# Construct
+DC_sk_mean_boot <- boot(DC_sk, statistic = mean_boot, R = 999)
+DC_sk_var_boot <- boot(DC_sk, statistic = var_boot, R = 999)
+
+# Print
+DC_sk_mean_boot
+DC_sk_var_boot
+
+# Plot bootstrap distribution and qq-plot against normal
+plot(DC_sk_mean_boot)
+plot(DC_sk_var_boot)
+```
+
+
+## Canada
+```{r, out.width="75%"}
+# Canada
+Canada <- read.csv("S_P_TSX 60 Index.csv", header = TRUE)
+DC_canada <- Canada$daily_change
+
+# Construct
+DC_canada_mean_boot <- boot(DC_canada, statistic = mean_boot, R = 999)
+DC_canada_var_boot <- boot(DC_canada, statistic = var_boot, R = 999)
+
+# Print
+DC_canada_mean_boot
+DC_canada_var_boot
+
+# Plot bootstrap distribution and qq-plot against normal
+plot(DC_canada_mean_boot)
+plot(DC_canada_var_boot)
+```
+
+
+## France
+```{r, out.width="75%"}
+# France
+France <- read.csv("CAC 40 Index.csv", header = TRUE)
+DC_france <- France$daily_change
+
+# Construct
+DC_france_mean_boot <- boot(DC_france, statistic = mean_boot, R = 999)
+DC_france_var_boot <- boot(DC_france, statistic = var_boot, R = 999)
+
+# Print
+DC_france_mean_boot
+DC_france_var_boot
+
+# Plot bootstrap distribution and qq-plot against normal
+plot(DC_france_mean_boot)
+plot(DC_france_var_boot)
+```
+
+
+## India
+```{r, out.width="75%"}
+# India
+India <- read.csv("Bombay Stock Market Index.csv", header = TRUE)
+DC_india <- India$daily_change
+
+# Construct
+DC_india_mean_boot <- boot(DC_india, statistic = mean_boot, R = 999)
+DC_india_var_boot <- boot(DC_india, statistic = var_boot, R = 999)
+
+# Print
+DC_india_mean_boot
+DC_india_var_boot
+
+# Plot bootstrap distribution and qq-plot against normal
+plot(DC_india_mean_boot)
+plot(DC_india_var_boot)
+```
+
+
+## Italy
+```{r, out.width="75%"}
+# Italy
+Italy <- read.csv("FTSE MIB Index.csv", header = TRUE)
+DC_italy <- Italy$daily_change
+
+# Construct
+DC_italy_mean_boot <- boot(DC_italy, statistic = mean_boot, R = 999)
+DC_italy_var_boot <- boot(DC_italy, statistic = var_boot, R = 999)
+
+# Print
+DC_italy_mean_boot
+DC_italy_var_boot
+
+# Plot bootstrap distribution and qq-plot against normal
+plot(DC_italy_mean_boot)
+plot(DC_italy_var_boot)
+```
+
+
+## UK
+```{r, out.width="75%"}
+# UK
+UK <- read.csv("FTSE 100 Index.csv", header = TRUE)
+DC_uk <- UK$daily_change
+
+# Construct
+DC_uk_mean_boot <- boot(DC_uk, statistic = mean_boot, R = 999)
+DC_uk_var_boot <- boot(DC_uk, statistic = var_boot, R = 999)
+
+# Print
+DC_uk_mean_boot
+DC_uk_var_boot
+
+# Plot bootstrap distribution and qq-plot against normal
+plot(DC_uk_mean_boot)
+plot(DC_uk_var_boot)
+```
+
+### For these three countries below, there are several "NA" cells in the data. If the content of daily_change in a row is NA, I deleted the whole row.
+
+
+## Brazil
+```{r, out.width="75%"}
+# Brazil
+Brazil <- read.csv("Bovespa Stock Index.csv", header = TRUE)
+Brazil <- na.omit(Brazil)
+DC_brazil <- Brazil$daily_change
+
+# Construct
+DC_brazil_mean_boot <- boot(DC_brazil, statistic = mean_boot, R = 999)
+DC_brazil_var_boot <- boot(DC_brazil, statistic = var_boot, R = 999)
+
+# Print
+DC_brazil_mean_boot
+DC_brazil_var_boot
+
+# Plot bootstrap distribution and qq-plot against normal
+plot(DC_brazil_mean_boot)
+plot(DC_brazil_var_boot)
+```
+
+
+## Japan
+```{r, out.width="75%"}
+# Japan
+Japan <- read.csv("Nikkei 225 Index.csv", header = TRUE)
+Japan <- na.omit(Japan)
+DC_japan <- Japan$daily_change
+
+# Construct
+DC_japan_mean_boot <- boot(DC_japan, statistic = mean_boot, R = 999)
+DC_japan_var_boot <- boot(DC_japan, statistic = var_boot, R = 999)
+
+# Print
+DC_japan_mean_boot
+DC_japan_var_boot
+
+# Plot bootstrap distribution and qq-plot against normal
+plot(DC_japan_mean_boot)
+plot(DC_japan_var_boot)
+```
+
+
+## Germany
+```{r, out.width="75%"}
+# Germany
+Germany <- read.csv("DAX 30 Index.csv", header = TRUE)
+Germany <- na.omit(Germany)
+DC_germany <- Germany$daily_change
+
+# Construct
+DC_germany_mean_boot <- boot(DC_germany, statistic = mean_boot, R = 999)
+DC_germany_var_boot <- boot(DC_germany, statistic = var_boot, R = 999)
+
+# Print
+DC_germany_mean_boot
+DC_germany_var_boot
+
+# Plot bootstrap distribution and qq-plot against normal
+plot(DC_germany_mean_boot)
+plot(DC_germany_var_boot)
+```
+
+
+
+
+
+
+
+
+
